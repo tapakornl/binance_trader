@@ -6,17 +6,62 @@ import socket
 import time
 from typing import Optional
 import threading
+from binance.client import Client
+from binance.enums import *
 
 this = False
 HOST = '127.0.0.1'  # The server's hostname or IP address
 PORT = 1234
+POWER = True
+API_KEY = "TO BE ADDED:"
+API_SC = "TO BE ADDED"
+
+def binance_login(API_KEY, API_SC):
+    client = Client(API_KEY,
+                    API_SC)
+
+def buy(client):
+    order = client.order_market_buy(
+        symbol='BTCUSDT',
+        quantity=0.001)
+
+def pre_process_klines(klines, ticks_no= None):
+    if ticks_no:
+        return [klines[tick][4] for tick in range(ticks_no)]
+    else:
+        return [kline[4] for kline in klines ]
+
+def EMA(preprocess_klines, ticks_no, count):
+    if ticks_no == 0:
+        return preprocess_klines[0]
+    else:
+        K = 2 / (count + 1)
+        return (preprocess_klines[ticks_no-1] * K) + (EMA(preprocess_klines[ticks_no-1], ticks_no-1, count+1) * (1 - K))
+def moving_avg(klines, ticks_no):
+    data = pre_process_klines(klines)
+    data = [klines[i][4] for i in range(0, ticks_no)]
+    return sum(data)/ticks_no
+
+def check_indicator(client):
+    klines = client.get_historical_klines("BTCUSDT",
+                                          Client.KLINE_INTERVAL_15MINUTE,
+                                          "1 day ago UTC")
+
+    return True
 
 def bot_trading():
+
+    lastTime = time.time()
+    client = binance_login(API_KEY, API_SC)
+
     while True:
-        if this:
-            print(1)
-            print(this)
-            time.sleep(1)
+        if POWER == False:
+            break
+
+        if time.time() > lastTime+30 and this:
+            if check_indicator()
+            lastTime = time.time()
+
 x = threading.Thread(target=bot_trading, args=())
 x.start()
 
@@ -42,3 +87,8 @@ def stop_trade():
     global this
     this= False
     return "OK"
+
+@router.get('/shutdown')
+def shutdown_trade():
+    global POWER
+    POWER = False
