@@ -37,16 +37,19 @@ def EMA(preprocess_klines, ticks_no, count):
     else:
         K = 2 / (count + 1)
         return (preprocess_klines[ticks_no-1] * K) + (EMA(preprocess_klines[ticks_no-1], ticks_no-1, count+1) * (1 - K))
+
 def moving_avg(klines, ticks_no):
     data = pre_process_klines(klines)
     data = [klines[i][4] for i in range(0, ticks_no)]
     return sum(data)/ticks_no
 
-def check_indicator(client):
+def get_historical_data(client):
     klines = client.get_historical_klines("BTCUSDT",
                                           Client.KLINE_INTERVAL_15MINUTE,
                                           "1 day ago UTC")
 
+def check_indicator(client):
+    klines = get_historical_data(client)
     return True
 
 def bot_trading():
@@ -59,12 +62,12 @@ def bot_trading():
             break
 
         if time.time() > lastTime+30 and this:
-            if check_indicator()
+            if check_indicator():
+                return
             lastTime = time.time()
 
 x = threading.Thread(target=bot_trading, args=())
 x.start()
-
 
 router = APIRouter(
     prefix="/trader",
